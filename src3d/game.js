@@ -400,7 +400,7 @@
 
     this.roundTimer = ROUND_TIME;
     this.phase = 'countdown';
-    this.phaseTimer = 20; // 选枪阶段 20 秒
+    this.phaseTimer = 15; // 选枪阶段 15 秒后开始比赛
     this.playerKills = 0; D3.HUD.setKills(0);
     this._playerChoice = null;
     this._rollWeaponChoices(); // 展示全部武器（不随机）

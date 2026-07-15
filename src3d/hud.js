@@ -289,11 +289,11 @@
     var thc = th + ';text-align:center';
     var html = '<div style="font-size:12px;color:#9fb0c8;margin-bottom:6px;letter-spacing:1px;width:min(720px,94vw);margin-left:auto;margin-right:auto;display:flex;justify-content:space-between;align-items:center">'+
       '<span>选择武器（全部 '+items.length+' 把 · 数字键 1-9 · 字母键 A-Z · 或点击行）</span>'+
-      '<span style="color:#ffd27a;font-weight:900;white-space:nowrap">⏱ <span id="h3-lo-timer">20</span>s</span></div>'+
+      '<span style="color:#ffd27a;font-weight:900;white-space:nowrap">⏱ <span id="h3-lo-timer">15</span>s</span></div>'+
       '<div style="width:min(720px,94vw);max-height:56vh;overflow-y:auto;overflow-x:hidden;margin:0 auto;border-radius:10px;border:1px solid rgba(255,255,255,.14);box-shadow:0 8px 30px rgba(0,0,0,.5);background:rgba(9,13,24,.95)">'+
       '<table style="width:100%;border-collapse:collapse;font-family:inherit">'+
       '<thead><tr>'+
-      '<th style="'+thc+';width:40px">键</th>'+
+      '<th style="'+thc+';width:52px">代号</th>'+
       '<th style="'+th+'">武器</th>'+
       '<th style="'+thc+';width:78px">类别</th>'+
       '<th style="'+thc+';width:52px">伤害</th>'+
@@ -305,8 +305,13 @@
       var it = items[i], sel = i === current;
       var td = 'padding:5px 8px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.06)';
       var tdc = td + ';text-align:center';
+      var isLetter = i >= 9; // 数字不够用字母做代号
+      var badge = '<span style="display:inline-block;min-width:22px;padding:1px 6px;border-radius:6px;font-weight:900;'+
+        'background:'+(isLetter?'rgba(124,255,176,.16)':'rgba(255,210,122,.16)')+';'+
+        'border:1px solid '+(isLetter?'rgba(124,255,176,.6)':'rgba(255,210,122,.6)')+';'+
+        'color:'+(isLetter?'#7CFFB0':'#ffd27a')+'">'+self._loadoutKey(i)+'</span>';
       html += '<tr data-idx="'+i+'" class="h3-lo" style="cursor:pointer;'+(sel?'background:linear-gradient(90deg,#1c4a6e,#123049)':'')+'">'+
-        '<td style="'+tdc+';color:#ffd27a;font-weight:900">'+self._loadoutKey(i)+'</td>'+
+        '<td style="'+tdc+'">'+badge+'</td>'+
         '<td style="'+td+';font-weight:800;color:'+(sel?'#8fd0ff':'#eaf2ff')+'">'+it.name+'</td>'+
         '<td style="'+tdc+';color:#9fb0c8">'+it.cat+'</td>'+
         '<td style="'+tdc+';color:#ff9a8a;font-weight:700">'+it.dmg+'</td>'+
