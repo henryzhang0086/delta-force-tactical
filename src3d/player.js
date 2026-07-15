@@ -78,7 +78,7 @@
       mp5: { color: 0x30343c, mag: 'curved' }, p90: { color: 0x22252c, bodyLen: 0.42, mag: 'top' }, ump45: { color: 0x3a352c, mag: 'box' },
       m250: { color: 0x3a3630 }, mg36: { color: 0x2f3a30, mag: 'drum' }, pkm: { color: 0x3a2f22, mag: 'drum' },
       awm: { color: 0x2e3b30, barrelLen: 0.74 }, m700: { color: 0x3a2f26, optic: 'tube' }, m24: { color: 0x33402f },
-      sv98: { color: 0x2e3b30 }, sr25: { color: 0x37322a, optic: 'tube' }, m14: { color: 0x4a3a26, optic: 'tube' }, qbu: { color: 0x3a3020 },
+      sv98: { color: 0x2e3b30 }, sr25: { color: 0x37322a, optic: 'tube' }, m14: { color: 0x4a3a26, mag: 'box', magLen: 0.26, optic: 'holo' }, qbu: { color: 0x3a3020 },
       spas: { color: 0x2a2a2e }, m870: { color: 0x3a2a1e }, g18: { color: 0x24242a }, deagle: { color: 0x4a4038, barrelLen: 0.16 }
     }[id];
     if (over) for (var ko in over) d[ko] = over[ko];
