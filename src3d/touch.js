@@ -178,15 +178,12 @@
         p.keys['ShiftLeft'] = state.sprint;
         p.keys['ControlLeft'] = state.prone;
       }
-      // 开始遮罩 / 暂停 / 选枪商店面板出现时，隐藏虚拟按键避免误触与遮挡
+      // 开始遮罩 / 暂停 / 选枪商店面板出现时，整体隐藏触屏层，让下方面板（选枪表格/商店）可点可滚动
       var overlay = document.getElementById('startOverlay');
       var overlayUp = overlay && overlay.style.display !== 'none' && !overlay.dataset.started;
       var pausedUp = game.paused || (D3.HUD.pause && D3.HUD.pause.style.display !== 'none');
       var panelUp = (D3.HUD.loadout && D3.HUD.loadout.style.display === 'block');
-      root.style.display = (overlayUp || pausedUp) ? 'none' : 'block';
-      // 战斗控件在选枪/商店面板时淡出（面板本身可点），仅保留移动/瞄准
-      var hideActions = panelUp ? 'none' : 'flex';
-      [fireBtn, adsBtn, reloadBtn, jumpBtn, proneBtn, sprintBtn, nadeBtn, viewBtn, interactBtn].forEach(function (b) { b.style.display = hideActions; });
+      root.style.display = (overlayUp || pausedUp || panelUp) ? 'none' : 'block';
       shopBtn.style.display = (game.mode === 'bed') ? 'flex' : 'none';
       requestAnimationFrame(loop);
     })();

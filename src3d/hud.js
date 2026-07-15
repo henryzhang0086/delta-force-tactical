@@ -285,21 +285,44 @@
   HUD.prototype._loadoutKey = function (i) { return i < 9 ? String(i + 1) : String.fromCharCode(65 + (i - 9)); };
   HUD.prototype.showLoadout = function (items, current, onPick) {
     var self = this;
-    var html = '<div style="font-size:12px;color:#9fb0c8;margin-bottom:8px;letter-spacing:1px">选择武器（全部 '+items.length+' 把 · 数字键 1-9 · 字母键 A-Z · 或点击）</div>'+
-      '<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:940px;margin:0 auto;max-height:60vh;overflow:auto">';
+    var th = 'padding:6px 8px;font-size:10px;color:#9fb0c8;font-weight:700;text-align:left;position:sticky;top:0;background:#111629;border-bottom:2px solid rgba(255,255,255,.14);white-space:nowrap';
+    var thc = th + ';text-align:center';
+    var html = '<div style="font-size:12px;color:#9fb0c8;margin-bottom:6px;letter-spacing:1px;width:min(720px,94vw);margin-left:auto;margin-right:auto;display:flex;justify-content:space-between;align-items:center">'+
+      '<span>选择武器（全部 '+items.length+' 把 · 数字键 1-9 · 字母键 A-Z · 或点击行）</span>'+
+      '<span style="color:#ffd27a;font-weight:900;white-space:nowrap">⏱ <span id="h3-lo-timer">20</span>s</span></div>'+
+      '<div style="width:min(720px,94vw);max-height:56vh;overflow-y:auto;overflow-x:hidden;margin:0 auto;border-radius:10px;border:1px solid rgba(255,255,255,.14);box-shadow:0 8px 30px rgba(0,0,0,.5);background:rgba(9,13,24,.95)">'+
+      '<table style="width:100%;border-collapse:collapse;font-family:inherit">'+
+      '<thead><tr>'+
+      '<th style="'+thc+';width:40px">键</th>'+
+      '<th style="'+th+'">武器</th>'+
+      '<th style="'+thc+';width:78px">类别</th>'+
+      '<th style="'+thc+';width:52px">伤害</th>'+
+      '<th style="'+thc+';width:52px">弹匣</th>'+
+      '<th style="'+thc+';width:52px">射速</th>'+
+      '<th style="'+thc+';width:56px">模式</th>'+
+      '</tr></thead><tbody>';
     for (var i = 0; i < items.length; i++) {
       var it = items[i], sel = i === current;
-      html += '<div data-idx="'+i+'" class="h3-lo" style="cursor:pointer;padding:5px 9px;border-radius:9px;min-width:80px;text-align:left;'+
-        'background:'+(sel?'linear-gradient(180deg,#1c4a6e,#123049)':'rgba(18,22,38,.85)')+';border:2px solid '+(sel?'#39C0FF':'rgba(255,255,255,.12)')+'">'+
-        '<div style="font-size:9px;color:#7f8ba3;display:flex;justify-content:space-between;gap:6px"><span style="color:#ffd27a;font-weight:900">'+self._loadoutKey(i)+'</span><span>'+it.cat+'</span></div>'+
-        '<div style="font-size:12px;font-weight:800;color:'+(sel?'#8fd0ff':'#cfe0f5')+';margin-top:1px">'+it.name+'</div></div>';
+      var td = 'padding:5px 8px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.06)';
+      var tdc = td + ';text-align:center';
+      html += '<tr data-idx="'+i+'" class="h3-lo" style="cursor:pointer;'+(sel?'background:linear-gradient(90deg,#1c4a6e,#123049)':'')+'">'+
+        '<td style="'+tdc+';color:#ffd27a;font-weight:900">'+self._loadoutKey(i)+'</td>'+
+        '<td style="'+td+';font-weight:800;color:'+(sel?'#8fd0ff':'#eaf2ff')+'">'+it.name+'</td>'+
+        '<td style="'+tdc+';color:#9fb0c8">'+it.cat+'</td>'+
+        '<td style="'+tdc+';color:#ff9a8a;font-weight:700">'+it.dmg+'</td>'+
+        '<td style="'+tdc+';color:#cfe0f5">'+it.mag+'</td>'+
+        '<td style="'+tdc+';color:#cfe0f5">'+it.rpm+'</td>'+
+        '<td style="'+tdc+';color:'+(it.auto?'#7CFFB0':'#ffc83d')+';font-weight:700">'+(it.auto?'全自动':'半自动')+'</td>'+
+        '</tr>';
     }
-    html += '</div>';
+    html += '</tbody></table></div>';
     this.loadout.innerHTML = html; this.loadout.style.display = 'block';
     var nodes = this.loadout.querySelectorAll ? this.loadout.querySelectorAll('.h3-lo') : [];
     for (var n = 0; n < nodes.length; n++) (function(node){ node.addEventListener('click', function(){ onPick(parseInt(node.getAttribute('data-idx'),10)); }); })(nodes[n]);
   };
   HUD.prototype.hideLoadout = function () { this.loadout.style.display = 'none'; };
+  // 选枪阶段：只更新表头里的剩余秒数（不遮挡表格）
+  HUD.prototype.setLoadoutCountdown = function (sec) { var e = document.getElementById('h3-lo-timer'); if (e) e.textContent = sec; };
 
   // 每帧维护血屏/方向指示衰减
   HUD.prototype.update = function (dt) {

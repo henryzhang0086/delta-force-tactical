@@ -256,7 +256,10 @@
   };
   Game3D.prototype._showLoadout = function () {
     var ids = this.WEAPON_CHOICES;
-    var items = ids.map(function (id) { var w = DF.WEAPONS[id]; return { id: id, name: w.name.split(' ')[0], cat: w.category.toUpperCase() }; });
+    var items = ids.map(function (id) {
+      var w = DF.WEAPONS[id];
+      return { id: id, name: w.name, cat: w.category.toUpperCase(), dmg: w.damage, mag: w.mag, rpm: w.rpm, auto: !!w.auto };
+    });
     var self = this;
     D3.HUD.showLoadout(items, this._playerChoice == null ? -1 : this._playerChoice, function (i) { self.pickWeapon(i); });
   };
@@ -404,6 +407,7 @@
     D3.HUD.setLow(false);
     D3.HUD.hideBanner();
     D3.HUD.showBanner('第 ' + this.round + ' 局', '战场：' + this.map.themeName, '#8fd0ff');
+    setTimeout(function () { if (self.phase === 'countdown') D3.HUD.hideBanner(); }, 1800); // 选枪期间横幅短暂显示后隐去，避免遮挡表格
     this._showLoadout();
     if (this.audio.whistle) this.audio.whistle();
     this._updateHUDTeams();
@@ -1410,7 +1414,8 @@
       // 倒计时把镜头摆到玩家身后，AI 站桩，玩家不可动
       if (this.player) this.player._updateCamera(dt);
       D3.HUD.setTimer(this.roundTimer);
-      D3.HUD.setCountdown(Math.max(1, Math.ceil(this.phaseTimer)));
+      D3.HUD.setCountdown(null); // 选枪表格已含倒计时，不再显示中央大数字
+      D3.HUD.setLoadoutCountdown(Math.max(1, Math.ceil(this.phaseTimer)));
       this._drawMinimap(); this._updateWeather(dt);
       if (this.phaseTimer <= 0) { this.phase = 'live'; D3.HUD.hideBanner(); D3.HUD.setCountdown(null); D3.HUD.hideLoadout(); this.audio.whistle && this.audio.whistle(); if (this.player) { this.player.enabled = true; this.player.wantThrow = false; this.player.wantInteract = false; } }
     } else if (this.phase === 'live') {
