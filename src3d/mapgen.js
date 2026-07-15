@@ -667,9 +667,9 @@
     addSlab(ctx, sx0, HX, -HZ, HZ, fh * 2, floorCol);
     addSlab(ctx, -HX, sx0, 12, HZ, fh * 2, floorCol);
     addSlab(ctx, -HX, sx0, -HZ, 0, fh * 2, floorCol);
-    // 楼梯井护栏（美化 + 防跌落提示）
-    addBoxY(ctx, sx0, 0, 0.3, 1.0, HZ * 2, accent, fh, { outline: 0.03 });
-    addBoxY(ctx, sx0, 6, 0.3, 1.0, HZ * 2 - 12, accent, fh * 2, { outline: 0.03 });
+    // 楼梯井护栏（只护住敞开的楼梯井边缘，不封死落台，玩家可从楼梯走上各层楼面）
+    addBoxY(ctx, sx0, -14, 0.3, 1.0, 24, accent, fh, { outline: 0.03 });     // 二层：护一层楼梯井 z[-26,-2]
+    addBoxY(ctx, sx0, 6, 0.3, 1.0, 12, accent, fh * 2, { outline: 0.03 });   // 三层：护二层楼梯井 z[0,12]
 
     // —— 夹层（俯瞰中庭的半层 loft：短坡上去 + 护栏；层高提升后净空充足）——
     var mezY = 2.9;
@@ -710,10 +710,10 @@
       addBoxY(ctx, 20.5, -8.5, 11, fh, wt, wallCol, yb, { outline: 0.03 });   // 北墙 z=-8.5
       addBoxY(ctx, 15, -4.5, wt, fh, 8.5, wallCol, yb, { outline: 0.03 });    // 西墙(带门口在南段) x=15 z[-8.5,-0.25]
       addBoxY(ctx, 12, -3, 2.0, 1.3, 2.0, th.wood, yb, { tex: 'wood' });      // 房内掩体
-      // 西南角房(x 负, z 正)：门朝 +x
-      addBoxY(ctx, -20.5, 8.5, 11, fh, wt, wallCol, yb, { outline: 0.03 });
+      // 西南角房(x 负, z 正)：门朝 +x —— 北墙止于 x=-20，避开西侧楼梯井(x[-26,-21])，不再挡上三楼的坡道
+      addBoxY(ctx, -17.5, 8.5, 5, fh, wt, wallCol, yb, { outline: 0.03 });
       addBoxY(ctx, -15, 4.5, wt, fh, 8.5, wallCol, yb, { outline: 0.03 });
-      addBoxY(ctx, -12, 3, 2.0, 1.3, 2.0, th.wood, yb, { tex: 'wood' });
+      addBoxY(ctx, -17.5, 4.5, 2.0, 1.3, 2.0, th.wood, yb, { tex: 'wood' });
 
       // 吊灯（每层 4 盏）
       ceilingLamp(ctx, -13, ly, -13); ceilingLamp(ctx, 13, ly, 13); ceilingLamp(ctx, -13, ly, 13); ceilingLamp(ctx, 13, ly, -13);
