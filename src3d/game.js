@@ -176,7 +176,7 @@
         if (self.phase === 'live' && self._shopOpen && /^Digit[1-6]$/.test(e.code)) { self.buyWeapon(parseInt(e.code.slice(5), 10) - 1); return; }
       }
       // 赛前选武器（FFA / 海岛）：数字键 1-9 选前 9 把，字母键 A-Z 选其余（数字不够用字母）
-      if ((self.mode === 'ffa' || self.mode === 'island') && self.phase === 'countdown') {
+      if ((self.mode === 'ffa' || self.mode === 'island' || self.mode === 'tower') && self.phase === 'countdown') {
         var idx = -1, dm = /^Digit([1-9])$/.exec(e.code), lm = /^Key([A-Z])$/.exec(e.code);
         if (dm) idx = parseInt(dm[1], 10) - 1;
         else if (lm) idx = 9 + (lm[1].charCodeAt(0) - 65);
@@ -324,6 +324,7 @@
     // 队伍编制与血量（海岛=两队各5人；战斗模式提高血量，人不易速死）
     if (this.mode === 'pve') { this.teamRoster = ['alpha']; this.teamSize = 3; this.hpBase = 130; }
     else if (this.mode === 'island') { this.teamRoster = ['alpha', 'bravo']; this.teamSize = 5; this.hpBase = 160; }
+    else if (this.mode === 'tower') { this.teamRoster = ['alpha', 'bravo']; this.teamSize = 10; this.hpBase = 150; }
     else if (this.mode === 'tdm') { this.teamRoster = ['alpha', 'bravo']; this.teamSize = 5; this.hpBase = 150; }
     else { this.teamRoster = TEAMS; this.teamSize = 3; this.hpBase = 140; }
     if (D3.HUD.setTeamActive) { D3.HUD.setTeamActive('charlie', this.teamRoster.indexOf('charlie') >= 0); }
@@ -361,8 +362,10 @@
     this.pickups.length = 0;
     this._clearVehicles();
 
-    // 生成新图（海岛模式用固定海岛图，其余每局随机）
-    this.map = (this.mode === 'island' && D3.MapGen.generateIsland) ? D3.MapGen.generateIsland() : D3.MapGen.generate();
+    // 生成新图（海岛/室内塔楼用固定图，其余每局随机）
+    this.map = (this.mode === 'island' && D3.MapGen.generateIsland) ? D3.MapGen.generateIsland()
+      : (this.mode === 'tower' && D3.MapGen.generateTower) ? D3.MapGen.generateTower()
+      : D3.MapGen.generate();
     this.mapGroup = this.map.group; this.scene.add(this.mapGroup);
     this.world.colliders = this.map.colliders;
     this.world.solids = this.map.solids;
@@ -376,6 +379,9 @@
     this.renderer.setClearColor(th.sky2, 1);
     this.hemi.intensity = th.amb;
     this.sun.color.set(th.sun);
+    // 室内地图（封顶无户外）压低平行光，避免阳光灌入过曝
+    this.sun.intensity = (th.sunI != null) ? th.sunI : 1.15;
+    this.fill.intensity = (th.sunI != null) ? th.sunI * 0.6 : 0.35;
     this.renderer.toneMappingExposure = th.exposure || 1.02;
     this._spawnWeather(th);
     this.audio.startAmbient && this.audio.startAmbient(th.weather, th.weather === 'rain' ? 0.05 : 0.026);

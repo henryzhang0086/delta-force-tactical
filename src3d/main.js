@@ -20,13 +20,14 @@
       setTimeout(function () { overlay.style.display = 'none'; }, 420);
       game.start(mode || 'ffa');
     }
-    var ffaBtn = document.getElementById('startFfa'), pveBtn = document.getElementById('startPve'), bedBtn = document.getElementById('startBed'), railBtn = document.getElementById('startRail'), islandBtn = document.getElementById('startIsland'), tdmBtn = document.getElementById('startTdm');
+    var ffaBtn = document.getElementById('startFfa'), pveBtn = document.getElementById('startPve'), bedBtn = document.getElementById('startBed'), railBtn = document.getElementById('startRail'), islandBtn = document.getElementById('startIsland'), tdmBtn = document.getElementById('startTdm'), towerBtn = document.getElementById('startTower');
     if (ffaBtn) ffaBtn.addEventListener('click', function () { begin('ffa'); });
     if (pveBtn) pveBtn.addEventListener('click', function () { begin('pve'); });
     if (bedBtn) bedBtn.addEventListener('click', function () { begin('bed'); });
     if (railBtn) railBtn.addEventListener('click', function () { begin('rail'); });
     if (islandBtn) islandBtn.addEventListener('click', function () { begin('island'); });
     if (tdmBtn) tdmBtn.addEventListener('click', function () { begin('tdm'); });
+    if (towerBtn) towerBtn.addEventListener('click', function () { begin('tower'); });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

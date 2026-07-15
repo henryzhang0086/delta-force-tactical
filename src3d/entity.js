@@ -116,7 +116,7 @@
   };
 
   Fighter.prototype.spawn = function (pos, loadout) {
-    this.pos.copy(pos); this.pos.y = 0;
+    this.pos.copy(pos); this.pos.y = pos.y || 0; // 尊重出生高度(可在楼上出生)
     this.health = this.maxHealth; this.alive = true;
     this.inVehicle = null; // 重生/换回合清除载具占用，避免残留“幽灵坦克”状态
     this.equip(loadout);
@@ -314,6 +314,13 @@
     // 空仓自动换弹
     if (this.alive && !this.reloading && this.ammo <= 0 && this.reserve > 0) this.startReload();
     if (this.reloading) { this.reloadTimer -= dt; if (this.reloadTimer <= 0) this._finishReload(); }
+    // AI 跟随楼层高度：可走楼梯上下楼、站上层楼板，避免贴地穿模（玩家由 Player 控制器管理，跳跃不受此影响）
+    if (!this.isPlayer && this.alive && !this.inVehicle && world && world.supportHeight) {
+      var sup = world.supportHeight(this.pos.x, this.pos.z, this.pos.y + 0.7);
+      // 大落差(走出楼板边缘/楼梯口)平滑下坠，小台阶直接贴合
+      if (sup < this.pos.y - 0.1) this.pos.y = Math.max(sup, this.pos.y - 14 * dt);
+      else this.pos.y = sup;
+    }
     // 同步网格（叠加跳跃升高 / 卧倒压低 / 乘车升高）
     this.char.root.position.set(this.pos.x, this.pos.y + (this.airY || 0) + (this.stanceY || 0), this.pos.z);
     this.char.root.rotation.y = this.yaw;

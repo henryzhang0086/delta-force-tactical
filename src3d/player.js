@@ -293,8 +293,10 @@
     }
     if (!k['Space']) this._jumpLatch = false;
     if (!this.grounded) {
+      var prevY = f.pos.y;
       this.velY -= 20 * dt; f.pos.y += this.velY * dt;
-      var land = sh(f.pos.x, f.pos.z, f.pos.y);
+      // 关键：用“下落前的高度”查询支撑，避免一帧越过薄楼板导致穿模坠楼（上二/三楼跳跃时）
+      var land = sh(f.pos.x, f.pos.z, Math.max(prevY, f.pos.y) + 0.1);
       if (this.velY <= 0 && f.pos.y <= land) { f.pos.y = land; this.velY = 0; this.grounded = true; if (world.audio && world.audio.footstep) world.audio.footstep(); }
       if (f.pos.y < -6) { f.pos.y = 0; this.velY = 0; this.grounded = true; } // 安全兜底
     }

@@ -574,6 +574,94 @@
     return { group: group, solids: ctx.solids, colliders: ctx.colliders, platforms: ctx.platforms, spawns: spawns, center: new THREE.Vector3(0, 0, 0), radius: radius, theme: th, themeName: '海岛', water: ctx.water };
   }
 
+  // 带门洞的隔断墙（orient 'x'=沿X走 z=fixed；'z'=沿Z走 x=fixed），在 gapC 处留宽 gapW 的门
+  function wallGap(ctx, orient, fixed, from, to, gapC, gapW, yBase, h, col) {
+    var g0 = gapC - gapW / 2, g1 = gapC + gapW / 2, t = 0.4;
+    if (g0 > from + 0.15) { var c1 = (from + g0) / 2, L1 = g0 - from; if (orient === 'x') addBoxY(ctx, c1, fixed, L1, h, t, col, yBase, { outline: 0.03 }); else addBoxY(ctx, fixed, c1, t, h, L1, col, yBase, { outline: 0.03 }); }
+    if (g1 < to - 0.15) { var c2 = (g1 + to) / 2, L2 = to - g1; if (orient === 'x') addBoxY(ctx, c2, fixed, L2, h, t, col, yBase, { outline: 0.03 }); else addBoxY(ctx, fixed, c2, t, h, L2, col, yBase, { outline: 0.03 }); }
+  }
+  // 吊顶灯（暗色灯罩 + 柔和点光；避免自发光过曝触发泛光）
+  function ceilingLamp(ctx, x, y, z) {
+    var lamp = T.mesh(new THREE.BoxGeometry(1.4, 0.18, 1.4), 0x2a2e36, { outline: false, cast: false, emissive: 0xFFE6A8, emissiveIntensity: 0.35 });
+    lamp.position.set(x, y, z); ctx.group.add(lamp);
+    var pl = new THREE.PointLight(0xFFE6A8, 0.7, 22); pl.position.set(x, y - 0.4, z); ctx.group.add(pl);
+  }
+
+  // 纯室内三层塔楼：封闭无户外，房间 + 夹层 + 楼梯；两队各据一端独立房间(开局互不可见)，需穿越楼层索敌 CQB
+  function generateTower() {
+    T = D3.toon;
+    var th = { name: '室内塔楼', ground: 0x3f434b, ground2: 0x363a42, sky1: 0x0e1420, sky2: 0x1a2130, fog: 0x121722, fogD: 0.012, cover: 0x6b7079, wood: 0x7a6242, leaf: 0x4E9E3A, dirt: 0x2a2018, amb: 0.5, sun: 0xaeb8c6, sunI: 0.26, accent: 0xF2A93B, decor: 'oak', weather: 'none', groundTex: 'concrete', exposure: 0.72 };
+    var group = new THREE.Group();
+    var HX = 24, HZ = 24, fh = 4.6, wt = 0.5, radius = 36, top = fh * 3; // 13.8
+    var ctx = { group: group, solids: [], colliders: [], platforms: [], radius: radius, theme: th, water: null };
+    var body = 0x5f656e, floorCol = 0x4a4e56, wallCol = 0x646a73, sx0 = -19.5;
+
+    // 地面地板 + 封顶天花（封闭，无户外）
+    var floor = T.mesh(new THREE.BoxGeometry(HX * 2, 0.2, HZ * 2), floorCol, { outline: false, cast: false });
+    floor.position.y = -0.1; group.add(floor);
+    if (D3.tex) { var gt = D3.tex.getTiled('concrete', 24); if (gt && floor.material) floor.material.map = gt; }
+    addSlab(ctx, -HX, HX, -HZ, HZ, top, 0x3a3f47); // 屋顶封顶
+
+    // 外墙（全高封闭四面）
+    addBoxY(ctx, 0, -HZ, HX * 2, top, wt, body, 0, { outline: 0.05 });
+    addBoxY(ctx, 0, HZ, HX * 2, top, wt, body, 0, { outline: 0.05 });
+    addBoxY(ctx, -HX, 0, wt, top, HZ * 2, body, 0, { outline: 0.05 });
+    addBoxY(ctx, HX, 0, wt, top, HZ * 2, body, 0, { outline: 0.05 });
+
+    // —— 楼梯（贴左墙，两跑直上，连通三层）——
+    addRamp(ctx, -23, sx0, -13, -3, 0, fh, 'z', 1, 0x8a8f98);        // 一层 → 二层
+    addRamp(ctx, -23, sx0, -1, 9, fh, fh * 2, 'z', 1, 0x8a8f98);     // 二层 → 三层
+    // 二层楼板（留楼梯井 x[-24,sx0] z[-24,-3]）
+    addSlab(ctx, sx0, HX, -HZ, HZ, fh, floorCol);
+    addSlab(ctx, -HX, sx0, -3, HZ, fh, floorCol);
+    // 三层楼板（留楼梯井 x[-24,sx0] z[-1,9]）
+    addSlab(ctx, sx0, HX, -HZ, HZ, fh * 2, floorCol);
+    addSlab(ctx, -HX, sx0, 9, HZ, fh * 2, floorCol);
+    addSlab(ctx, -HX, sx0, -HZ, -1, fh * 2, floorCol);
+
+    // —— 夹层（俯瞰中庭的半层 loft：短坡上去 + 护栏）——
+    var mezY = 2.3;
+    addRamp(ctx, 8, 13, -5, -2, 0, mezY, 'x', 1, 0x8a8f98);          // 地面 → 夹层
+    addSlab(ctx, 13, 23, -9, 3, mezY, 0x7a6d55);                     // 夹层楼板(俯瞰中庭)
+    addBoxY(ctx, 13, -3, 0.35, 1.0, 12, th.accent, mezY, { outline: 0.03 });       // 内侧护栏
+
+    // —— 三层统一结构：每层两端独立出生房(错位开口，开局不直视) + 开阔中庭散布掩体(可正常交火) ——
+    for (var fl = 0; fl < 3; fl++) {
+      var yb = fl * fh;
+      // Alpha 出生房前墙(z=-16)，开口偏左 x[-15,-5]
+      addBoxY(ctx, -19.5, -16, 9, fh, wt, wallCol, yb, { outline: 0.04 });   // x[-24,-15]
+      addBoxY(ctx, 9.5, -16, 29, fh, wt, wallCol, yb, { outline: 0.04 });    // x[-5,24]
+      // Bravo 出生房前墙(z=16)，开口偏右 x[5,15]（与 Alpha 错位 → 开局无直线对射）
+      addBoxY(ctx, -9.5, 16, 29, fh, wt, wallCol, yb, { outline: 0.04 });    // x[-24,5]
+      addBoxY(ctx, 19.5, 16, 9, fh, wt, wallCol, yb, { outline: 0.04 });     // x[15,24]
+      // 中庭散布掩体（无整墙分割 → AI 能正常绕掩体推进交火；错落打断部分远射）
+      addBoxY(ctx, 0, 0, 2.6, fh, 2.6, 0x7a808a, yb, { outline: 0.04 });     // 中央方柱
+      addBoxY(ctx, -8, -5, 1.6, 1.3, 1.6, th.cover, yb, {});
+      addBoxY(ctx, 8, 5, 1.6, 1.3, 1.6, th.cover, yb, {});
+      addBoxY(ctx, -9, 6, 1.4, 1.3, 1.4, 0x8a6d4a, yb, {});
+      addBoxY(ctx, 9, -6, 1.4, 1.3, 1.4, 0x8a6d4a, yb, {});
+      addBoxY(ctx, 0, -11, 1.6, 1.3, 3.2, th.cover, yb, {});
+      addBoxY(ctx, 0, 11, 1.6, 1.3, 3.2, th.cover, yb, {});
+      addBoxY(ctx, -15, 2, 1.4, 1.3, 2.4, th.cover, yb, {});
+      addBoxY(ctx, 15, -2, 1.4, 1.3, 2.4, th.cover, yb, {});
+      // 吊灯（每层 3 盏，控制点光数量）
+      var ly = yb + fh - 0.4;
+      ceilingLamp(ctx, 0, ly, -12); ceilingLamp(ctx, 0, ly, 12); ceilingLamp(ctx, 0, ly, 0);
+    }
+
+    // —— 两队出生点：分布三层，各层据一端独立房间(靠各自开口)，开局不直视，出房穿越中庭索敌交火；玩家在一层 ——
+    var spawns = { alpha: [], bravo: [], charlie: [] }, perFloor = [4, 3, 3];
+    for (var flr = 0; flr < 3; flr++) {
+      var fy = flr * fh, nn = perFloor[flr];
+      for (var q = 0; q < nn; q++) {
+        var qz = (q % 2) * 2.6;
+        spawns.alpha.push(new THREE.Vector3(-14 + q * 3, fy, -22 + qz)); // 靠左开口
+        spawns.bravo.push(new THREE.Vector3(14 - q * 3, fy, 22 - qz));   // 靠右开口
+      }
+    }
+    return { group: group, solids: ctx.solids, colliders: ctx.colliders, platforms: ctx.platforms, spawns: spawns, center: new THREE.Vector3(0, 0, 0), radius: radius, theme: th, themeName: '室内三层塔楼', water: null };
+  }
+
   function generate(forceTheme) {
     T = D3.toon;
     var th = THEMES[forceTheme] || THEMES[pick(THEME_KEYS)];
@@ -662,5 +750,5 @@
     return { group: group, solids: ctx.solids, colliders: ctx.colliders, platforms: ctx.platforms, spawns: spawns, center: new THREE.Vector3(0,0,0), radius: radius, theme: th, themeName: th.name, water: ctx.water };
   }
 
-  D3.MapGen = { generate: generate, generateIsland: generateIsland, generateArena: generateArena, THEMES: THEMES };
+  D3.MapGen = { generate: generate, generateIsland: generateIsland, generateArena: generateArena, generateTower: generateTower, THEMES: THEMES };
 })(window.D3 = window.D3 || {});
