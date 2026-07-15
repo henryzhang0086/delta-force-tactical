@@ -439,75 +439,102 @@
     ctx.platforms.push({ minX: x - bw / 2, maxX: x + bw / 2, minZ: z - bd / 2, maxZ: z + bd / 2, y: H });
   }
 
-  // ————————— 团队竞技模式：紧凑对称竞技场（军事基地/集装箱堆场）—————————
+  // ————————— 团队竞技模式：室内「仓库」对称竞技场（还原和平精英仓库图）—————————
   function generateArena() {
     T = D3.toon;
-    var th = { name: '军事基地', ground: 0x8f948c, ground2: 0x7e837b, sky1: 0x8FB8DA, sky2: 0xCFE0EE, fog: 0xC6D4DE, fogD: 0.005, cover: 0x8C8C8C, wood: 0x9A7A4B, leaf: 0x4E9E3A, dirt: 0x8A5A2B, amb: 0.92, sun: 0xFFF7E4, accent: 0xF2A93B, decor: 'oak', weather: 'none', groundTex: 'concrete', exposure: 1.04 };
+    var th = { name: '仓库', ground: 0x9a9c94, ground2: 0x84867e, sky1: 0x28313d, sky2: 0x3b444f, fog: 0x2a303a, fogD: 0.006, cover: 0x8a8f88, wood: 0x9A7A4B, leaf: 0x4E9E3A, dirt: 0x6a5a3b, amb: 0.86, sun: 0xFFE7BC, sunI: 0.6, accent: 0xF2C438, decor: 'oak', weather: 'none', groundTex: 'concrete', exposure: 0.95 };
     var group = new THREE.Group();
-    var HX = 22, HZ = 30, radius = 38;
+    var HX = 20, HZ = 30, wallH = 8.6, wt = 0.6, radius = 40;
     var ctx = { group: group, solids: [], colliders: [], platforms: [], radius: radius, theme: th, water: null };
+    var cRed = 0xB8493A, cBlue = 0x2f6ea0, cYel = 0xC9A93B, cGrn = 0x3E7A46, cOrg = 0xC5732E, cTeal = 0x2f8f88, cGray = 0x767d87;
 
-    // 混凝土地面 + 标线
-    var floor = T.mesh(new THREE.BoxGeometry(HX * 2 + 6, 0.2, HZ * 2 + 6), th.ground, { outline: false, cast: false });
+    // —— 混凝土地面 + 三条纵向车道标线 + 中央危险环 ——
+    var floor = T.mesh(new THREE.BoxGeometry(HX * 2, 0.2, HZ * 2), th.ground, { outline: false, cast: false });
     floor.position.y = -0.1; group.add(floor);
-    addRoad(ctx, -HX, 0, HX, 0, 3.4);
-    // 中央标记环（用两只圆盘叠出圆环，避免依赖 RingGeometry）
-    var cOut = T.mesh(new THREE.CircleGeometry(5.1, 44), 0xd9c86a, { outline: false, cast: false }); cOut.rotation.x = -Math.PI / 2; cOut.position.y = 0.04; group.add(cOut);
-    var cIn = T.mesh(new THREE.CircleGeometry(4.4, 44), th.ground, { outline: false, cast: false }); cIn.rotation.x = -Math.PI / 2; cIn.position.y = 0.05; group.add(cIn);
+    if (D3.tex) { var gt = D3.tex.getTiled('concrete', 24); if (gt && floor.material) floor.material.map = gt; }
+    [-11, 0, 11].forEach(function (lx) {
+      var line = T.mesh(new THREE.BoxGeometry(0.18, 0.02, HZ * 2 - 8), 0xd8c24a, { outline: false, cast: false });
+      line.position.set(lx, 0.02, 0); group.add(line);
+    });
+    var cOut = T.mesh(new THREE.CircleGeometry(5.2, 44), th.accent, { outline: false, cast: false }); cOut.rotation.x = -Math.PI / 2; cOut.position.y = 0.03; group.add(cOut);
+    var cIn = T.mesh(new THREE.CircleGeometry(4.5, 44), th.ground, { outline: false, cast: false }); cIn.rotation.x = -Math.PI / 2; cIn.position.y = 0.05; group.add(cIn);
 
-    // 外围封闭墙（分层实体，高 4）
-    var wc = 0x707680, wt = 0.6, WX = HX + 1, WZ = HZ + 1;
-    addBoxY(ctx, 0, -WZ, WX * 2, 4, wt, wc, 0, { outline: 0.04 });
-    addBoxY(ctx, 0, WZ, WX * 2, 4, wt, wc, 0, { outline: 0.04 });
-    addBoxY(ctx, -WX, 0, wt, 4, WZ * 2, wc, 0, { outline: 0.04 });
-    addBoxY(ctx, WX, 0, wt, 4, WZ * 2, wc, 0, { outline: 0.04 });
+    // —— 四面封闭仓库外墙 + 腰线灯带 + 两端卷帘门（队伍色）——
+    addBoxY(ctx, 0, -HZ, HX * 2, wallH, wt, 0x6c727b, 0, { outline: 0.05 });
+    addBoxY(ctx, 0, HZ, HX * 2, wallH, wt, 0x6c727b, 0, { outline: 0.05 });
+    addBoxY(ctx, -HX, 0, wt, wallH, HZ * 2, 0x6c727b, 0, { outline: 0.05 });
+    addBoxY(ctx, HX, 0, wt, wallH, HZ * 2, 0x6c727b, 0, { outline: 0.05 });
+    lightBand(ctx, 0, 5.4, -HZ + 0.4, HX * 2 - 3, 'x', th.accent);
+    lightBand(ctx, 0, 5.4, HZ - 0.4, HX * 2 - 3, 'x', th.accent);
+    lightBand(ctx, -HX + 0.4, 5.4, 0, HZ * 2 - 3, 'z', th.accent);
+    lightBand(ctx, HX - 0.4, 5.4, 0, HZ * 2 - 3, 'z', th.accent);
+    function rollDoor(z, col) {
+      var d = T.mesh(new THREE.BoxGeometry(9, 5.2, 0.18), 0x2b2f33, { outline: 0.04, cast: false }); d.position.set(0, 2.6, z); group.add(d);
+      var lintel = T.mesh(new THREE.BoxGeometry(9.6, 0.7, 0.3), col, { outline: false, emissive: col, emissiveIntensity: 0.45, cast: false }); lintel.position.set(0, 5.55, z); group.add(lintel);
+    }
+    rollDoor(-HZ + 0.34, 0x39C0FF); rollDoor(HZ - 0.34, 0xff5a6a);
 
-    // 对称放置：s=+1 为 bravo 半场, s=-1 为 alpha 半场
+    // —— 封顶屋盖 + 天窗采光带 + 吊灯 + 桥式起重机梁 + 补光 ——
+    addSlab(ctx, -HX, HX, -HZ, HZ, wallH, 0x30353d);
+    [-14, 0, 14].forEach(function (sx) {
+      var sky = T.mesh(new THREE.BoxGeometry(3.0, 0.1, HZ * 2 - 8), 0xbfe0ff, { outline: false, cast: false, emissive: 0xbfe0ff, emissiveIntensity: 0.5 });
+      sky.position.set(sx, wallH - 0.24, 0); group.add(sky);
+    });
+    ceilingLamp(ctx, -10, wallH - 0.6, -12); ceilingLamp(ctx, 10, wallH - 0.6, -12);
+    ceilingLamp(ctx, -10, wallH - 0.6, 12); ceilingLamp(ctx, 10, wallH - 0.6, 12); ceilingLamp(ctx, 0, wallH - 0.6, 0);
+    var crane = T.mesh(new THREE.BoxGeometry(HX * 2 - 2, 0.8, 1.1), 0x3a4048, { outline: 0.03, cast: false }); crane.position.set(0, 6.8, 0); group.add(crane);
+    var atrPL = new THREE.PointLight(0xfff2c8, 0.55, 48); atrPL.position.set(0, 7.4, 0); group.add(atrPL);
+
+    // s=+1 → bravo 半场, s=-1 → alpha 半场（镜像对称，保证公平）
     function mir(fn) { fn(1); fn(-1); }
+    // 贴地可攀爬集装箱：侧边搭斜坡登顶（顶面 2.55 可架点）
+    function climbContainer(ctx, cx, cz, col) {
+      addContainer(ctx, cx, cz, 0, col, false);
+      var s = cz >= 0 ? 1 : -1, edge = cz - s * 1.25, gnd = edge - s * 3.2;
+      addRamp(ctx, cx - 2.2, cx + 2.2, Math.min(edge, gnd), Math.max(edge, gnd), 0, 2.55, 'z', s, 0x8a8f98);
+    }
+    // 高架走廊登顶坡（y0/y1 编码朝向，两半场通用）
+    function galleryRamp(ctx, minX, maxX, zGallery, zGround) {
+      var lo = Math.min(zGallery, zGround), hi = Math.max(zGallery, zGround);
+      addRamp(ctx, minX, maxX, lo, hi, lo === zGallery ? 3.0 : 0, hi === zGallery ? 3.0 : 0, 'z', 1, 0x8a8f98);
+    }
 
-    // 四角哨塔
-    mir(function (s) { addWatchtower(ctx, -(HX - 3), s * (HZ - 4), th); addWatchtower(ctx, HX - 3, s * (HZ - 4), th); });
+    // —— 中央高地：两座叠层集装箱塔（打断中路远射，迫使分路）+ 中央低掩体 ——
+    addContainer(ctx, -8, 0, 1, cOrg, true);   // 叠层 顶≈5.1
+    addContainer(ctx, 8, 0, 1, cTeal, true);
+    addBarrels(ctx, 0, 0, 3);
 
-    // 中央争夺核心：可进入两层建筑
-    addBuilding2F(ctx, 0, 0, th);
-    // 中央侧翼：堆叠集装箱（狙击/架点位）
-    addContainer(ctx, -14, 0, 1, 0xC24A32, true);
-    addContainer(ctx, 14, 0, 1, 0x2f6ea0, true);
-    addBarrels(ctx, -5.5, 2, 3); addBarrels(ctx, 5.5, -2, 3);
-
-    // 半场特征（镜像对称，保证公平）
+    // —— 镜像半场：三线掩体 + 可攀集装箱 + 侧墙高架狙击走廊 ——
     mir(function (s) {
-      // 可攀顶集装箱 + 上坡
-      addContainer(ctx, -11, s * 10, 0, 0x3E7A46, false);
-      var edge = s * 10 - s * 1.25, gnd = edge - s * 3.2;
-      addRamp(ctx, -13.2, -8.8, Math.min(edge, gnd), Math.max(edge, gnd), 0, 2.55, 'z', s, 0x8a8f98);
-      addContainer(ctx, 12, s * 9, 1, 0xB08A3A, false);
-      // 木箱堆 / 油桶 / 沙袋 / 卡车
-      addCrateStack(ctx, -6.5, s * 15, th);
-      addCrateStack(ctx, 17.5, s * 6, th);
-      addBarrels(ctx, -16, s * 20, 4);
-      addBarrels(ctx, 8, s * 20, 3);
-      addSandbagWall(ctx, -3, s * 20, 7, true);
-      addSandbagWall(ctx, 3, s * 12, 5, false);
-      addTruck(ctx, 15, s * 15, true, s > 0 ? 0x3a5a44 : 0x4a4a58);
-      // 出生区掩体（基地沙袋环 + 侧翼集装箱）
-      addSandbagRing(ctx, 0, s * (HZ - 4), 4.6, th);
-      addContainer(ctx, -9, s * (HZ - 5), 0, 0x7a828c, false);
-      addContainer(ctx, 9, s * (HZ - 5), 0, 0x7a828c, false);
+      // 近中线 (z=s*8)：贴墙集装箱 + 中路木箱堆，留分路缺口
+      addContainer(ctx, -15, s * 8, 1, s > 0 ? cBlue : cRed, false);
+      addContainer(ctx, 15, s * 8, 1, s > 0 ? cRed : cBlue, false);
+      addCrateStack(ctx, -5, s * 8, th); addCrateStack(ctx, 5, s * 8, th);
+      // 中场 (z=s*16)：可攀集装箱高点 + 中央油桶 + 侧墙沙袋
+      climbContainer(ctx, -10, s * 16, cYel); climbContainer(ctx, 10, s * 16, cGrn);
+      addBarrels(ctx, 0, s * 13, 3);
+      addSandbagWall(ctx, -17, s * 20, 6, false); addSandbagWall(ctx, 17, s * 20, 6, false);
+      // 出生前沿 (z=s*24)：灰集装箱靠侧墙(避开出生列) + 卡车 + 出生沙袋环
+      addContainer(ctx, -16, s * 24, 0, cGray, false); addContainer(ctx, 16, s * 24, 0, cGray, false);
+      addTruck(ctx, 0, s * 19, false, s > 0 ? 0x3a5a44 : 0x4a4a58);
+      addSandbagRing(ctx, 0, s * (HZ - 3.5), 4.4, th);
+      // 侧墙高架狙击走廊（东西各一，坡道登顶 + 内侧护栏）
+      addSlab(ctx, -HX, -HX + 4, Math.min(s * 16, s * 27), Math.max(s * 16, s * 27), 3.0, 0x555b63);
+      addSlab(ctx, HX - 4, HX, Math.min(s * 16, s * 27), Math.max(s * 16, s * 27), 3.0, 0x555b63);
+      galleryRamp(ctx, -HX, -HX + 4, s * 16, s * 13); galleryRamp(ctx, HX - 4, HX, s * 16, s * 13);
+      addBoxY(ctx, -HX + 4, s * 21.5, 0.3, 1.0, 11, th.accent, 3.0, { outline: 0.03 });
+      addBoxY(ctx, HX - 4, s * 21.5, 0.3, 1.0, 11, th.accent, 3.0, { outline: 0.03 });
     });
 
-    // 探照灯（自发光地标 + 点光，夜港氛围）
-    var beaconL = new THREE.PointLight(0xfff2c0, 0.7, 40); beaconL.position.set(0, 12, 0); group.add(beaconL);
-
-    // 两队出生点（南北对置，各 6 点）
+    // —— 两队出生点（南北对置，各 6 点，出生沙袋环内 + 前沿集装箱后）——
     var spawns = { alpha: [], bravo: [], charlie: [] };
     for (var p = 0; p < 6; p++) {
-      var sx = -12 + (p % 3) * 12 + rand(-1.5, 1.5), rowZ = HZ - 3 - ((p / 3) | 0) * 2.2;
+      var sx = -12 + (p % 3) * 12, rowZ = HZ - 3 - ((p / 3) | 0) * 2.4;
       spawns.alpha.push(new THREE.Vector3(sx, 0, -rowZ));
       spawns.bravo.push(new THREE.Vector3(sx, 0, rowZ));
       spawns.charlie.push(new THREE.Vector3(sx, 0, -rowZ)); // 占位(团队竞技仅两队)
     }
-    return { group: group, solids: ctx.solids, colliders: ctx.colliders, platforms: ctx.platforms, spawns: spawns, center: new THREE.Vector3(0, 0, 0), radius: radius, theme: th, themeName: '军事基地·团队竞技', water: null };
+    return { group: group, solids: ctx.solids, colliders: ctx.colliders, platforms: ctx.platforms, spawns: spawns, center: new THREE.Vector3(0, 0, 0), radius: radius, theme: th, themeName: '仓库·团队竞技', water: null };
   }
 
   // 海岛作战地图（和平精英风）：环海 + 沙滩 + 城市区 + 郊野/村庄 + 丘陵/湖泊 + 中心地标

@@ -1154,6 +1154,8 @@
     this.sky = D3.toon.skyDome(th.sky1, th.sky2, 340); this.scene.add(this.sky);
     this.scene.fog = new THREE.FogExp2(th.fog, th.fogD * 0.5);
     this.renderer.setClearColor(th.sky2, 1); this.hemi.intensity = th.amb; this.sun.color.set(th.sun);
+    this.sun.intensity = (th.sunI != null) ? th.sunI : 1.15;
+    this.fill.intensity = (th.sunI != null) ? th.sunI * 0.6 : 0.35;
     this.renderer.toneMappingExposure = th.exposure || 1.02; this._spawnWeather(th);
     this.audio.startAmbient && this.audio.startAmbient(th.weather, 0.024);
   };
