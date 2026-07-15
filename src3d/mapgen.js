@@ -586,77 +586,120 @@
     lamp.position.set(x, y, z); ctx.group.add(lamp);
     var pl = new THREE.PointLight(0xFFE6A8, 0.7, 22); pl.position.set(x, y - 0.4, z); ctx.group.add(pl);
   }
+  // 立柱（圆柱结构柱，带底高碰撞；兼作掩体与建筑感）
+  function pillar(ctx, x, z, yBase, h, r, col) {
+    var m = T.mesh(new THREE.CylinderGeometry(r, r, h, 14), col, { outline: 0.03 });
+    m.position.set(x, (yBase || 0) + h / 2, z); m.userData.solid = true; ctx.group.add(m); ctx.solids.push(m);
+    ctx.colliders.push({ minX: x - r, maxX: x + r, minZ: z - r, maxZ: z + r, h: h, yBase: yBase || 0 });
+    return m;
+  }
+  // 墙面发光灯带（装饰，非碰撞）；axis 'x' 沿 X, 'z' 沿 Z
+  function lightBand(ctx, x, y, z, len, axis, col) {
+    var m = T.mesh(new THREE.BoxGeometry(axis === 'x' ? len : 0.12, 0.22, axis === 'x' ? 0.12 : len), 0x11151c, { outline: false, cast: false, emissive: col, emissiveIntensity: 0.6 });
+    m.position.set(x, y, z); ctx.group.add(m); return m;
+  }
 
   // 纯室内三层塔楼：封闭无户外，房间 + 夹层 + 楼梯；两队各据一端独立房间(开局互不可见)，需穿越楼层索敌 CQB
   function generateTower() {
     T = D3.toon;
     var th = { name: '室内塔楼', ground: 0x3f434b, ground2: 0x363a42, sky1: 0x0e1420, sky2: 0x1a2130, fog: 0x121722, fogD: 0.012, cover: 0x6b7079, wood: 0x7a6242, leaf: 0x4E9E3A, dirt: 0x2a2018, amb: 0.5, sun: 0xaeb8c6, sunI: 0.26, accent: 0xF2A93B, decor: 'oak', weather: 'none', groundTex: 'concrete', exposure: 0.72 };
     var group = new THREE.Group();
-    var HX = 24, HZ = 24, fh = 4.6, wt = 0.5, radius = 36, top = fh * 3; // 13.8
+    var HX = 26, HZ = 26, fh = 5.8, wt = 0.5, radius = 40, top = fh * 3; // 层高提升到 5.8，更宽敞不压抑
     var ctx = { group: group, solids: [], colliders: [], platforms: [], radius: radius, theme: th, water: null };
-    var body = 0x5f656e, floorCol = 0x4a4e56, wallCol = 0x646a73, sx0 = -19.5;
+    var body = 0x545a63, floorCol = 0x4a4e56, wallCol = 0x646a73, accent = th.accent, sx0 = -21;
 
     // 地面地板 + 封顶天花（封闭，无户外）
     var floor = T.mesh(new THREE.BoxGeometry(HX * 2, 0.2, HZ * 2), floorCol, { outline: false, cast: false });
     floor.position.y = -0.1; group.add(floor);
-    if (D3.tex) { var gt = D3.tex.getTiled('concrete', 24); if (gt && floor.material) floor.material.map = gt; }
-    addSlab(ctx, -HX, HX, -HZ, HZ, top, 0x3a3f47); // 屋顶封顶
+    if (D3.tex) { var gt = D3.tex.getTiled('concrete', 26); if (gt && floor.material) floor.material.map = gt; }
+    // 中央地面标记环（美化 + 中场地标）
+    var ring1 = T.mesh(new THREE.CircleGeometry(6.2, 40), accent, { outline: false, cast: false }); ring1.rotation.x = -Math.PI / 2; ring1.position.y = 0.03; group.add(ring1);
+    var ring2 = T.mesh(new THREE.CircleGeometry(5.4, 40), floorCol, { outline: false, cast: false }); ring2.rotation.x = -Math.PI / 2; ring2.position.y = 0.05; group.add(ring2);
+    addSlab(ctx, -HX, HX, -HZ, HZ, top, 0x2f343c); // 屋顶封顶
 
-    // 外墙（全高封闭四面）
+    // 外墙（全高封闭四面）+ 逐层墙面发光灯带（美化 + 补光氛围）
     addBoxY(ctx, 0, -HZ, HX * 2, top, wt, body, 0, { outline: 0.05 });
     addBoxY(ctx, 0, HZ, HX * 2, top, wt, body, 0, { outline: 0.05 });
     addBoxY(ctx, -HX, 0, wt, top, HZ * 2, body, 0, { outline: 0.05 });
     addBoxY(ctx, HX, 0, wt, top, HZ * 2, body, 0, { outline: 0.05 });
-
-    // —— 楼梯（贴左墙，两跑直上，连通三层）——
-    addRamp(ctx, -23, sx0, -13, -3, 0, fh, 'z', 1, 0x8a8f98);        // 一层 → 二层
-    addRamp(ctx, -23, sx0, -1, 9, fh, fh * 2, 'z', 1, 0x8a8f98);     // 二层 → 三层
-    // 二层楼板（留楼梯井 x[-24,sx0] z[-24,-3]）
-    addSlab(ctx, sx0, HX, -HZ, HZ, fh, floorCol);
-    addSlab(ctx, -HX, sx0, -3, HZ, fh, floorCol);
-    // 三层楼板（留楼梯井 x[-24,sx0] z[-1,9]）
-    addSlab(ctx, sx0, HX, -HZ, HZ, fh * 2, floorCol);
-    addSlab(ctx, -HX, sx0, 9, HZ, fh * 2, floorCol);
-    addSlab(ctx, -HX, sx0, -HZ, -1, fh * 2, floorCol);
-
-    // —— 夹层（俯瞰中庭的半层 loft：短坡上去 + 护栏）——
-    var mezY = 2.3;
-    addRamp(ctx, 8, 13, -5, -2, 0, mezY, 'x', 1, 0x8a8f98);          // 地面 → 夹层
-    addSlab(ctx, 13, 23, -9, 3, mezY, 0x7a6d55);                     // 夹层楼板(俯瞰中庭)
-    addBoxY(ctx, 13, -3, 0.35, 1.0, 12, th.accent, mezY, { outline: 0.03 });       // 内侧护栏
-
-    // —— 三层统一结构：每层两端独立出生房(错位开口，开局不直视) + 开阔中庭散布掩体(可正常交火) ——
-    for (var fl = 0; fl < 3; fl++) {
-      var yb = fl * fh;
-      // Alpha 出生房前墙(z=-16)，开口偏左 x[-15,-5]
-      addBoxY(ctx, -19.5, -16, 9, fh, wt, wallCol, yb, { outline: 0.04 });   // x[-24,-15]
-      addBoxY(ctx, 9.5, -16, 29, fh, wt, wallCol, yb, { outline: 0.04 });    // x[-5,24]
-      // Bravo 出生房前墙(z=16)，开口偏右 x[5,15]（与 Alpha 错位 → 开局无直线对射）
-      addBoxY(ctx, -9.5, 16, 29, fh, wt, wallCol, yb, { outline: 0.04 });    // x[-24,5]
-      addBoxY(ctx, 19.5, 16, 9, fh, wt, wallCol, yb, { outline: 0.04 });     // x[15,24]
-      // 中庭散布掩体（无整墙分割 → AI 能正常绕掩体推进交火；错落打断部分远射）
-      addBoxY(ctx, 0, 0, 2.6, fh, 2.6, 0x7a808a, yb, { outline: 0.04 });     // 中央方柱
-      addBoxY(ctx, -8, -5, 1.6, 1.3, 1.6, th.cover, yb, {});
-      addBoxY(ctx, 8, 5, 1.6, 1.3, 1.6, th.cover, yb, {});
-      addBoxY(ctx, -9, 6, 1.4, 1.3, 1.4, 0x8a6d4a, yb, {});
-      addBoxY(ctx, 9, -6, 1.4, 1.3, 1.4, 0x8a6d4a, yb, {});
-      addBoxY(ctx, 0, -11, 1.6, 1.3, 3.2, th.cover, yb, {});
-      addBoxY(ctx, 0, 11, 1.6, 1.3, 3.2, th.cover, yb, {});
-      addBoxY(ctx, -15, 2, 1.4, 1.3, 2.4, th.cover, yb, {});
-      addBoxY(ctx, 15, -2, 1.4, 1.3, 2.4, th.cover, yb, {});
-      // 吊灯（每层 3 盏，控制点光数量）
-      var ly = yb + fh - 0.4;
-      ceilingLamp(ctx, 0, ly, -12); ceilingLamp(ctx, 0, ly, 12); ceilingLamp(ctx, 0, ly, 0);
+    for (var bf = 0; bf < 3; bf++) {
+      var by = bf * fh + fh * 0.68, bandCol = bf === 1 ? 0x39C0FF : accent;
+      lightBand(ctx, 0, by, -HZ + 0.35, HX * 2 - 4, 'x', bandCol);
+      lightBand(ctx, 0, by, HZ - 0.35, HX * 2 - 4, 'x', bandCol);
+      lightBand(ctx, -HX + 0.35, by, 0, HZ * 2 - 4, 'z', bandCol);
+      lightBand(ctx, HX + -0.35, by, 0, HZ * 2 - 4, 'z', bandCol);
     }
 
-    // —— 两队出生点：分布三层，各层据一端独立房间(靠各自开口)，开局不直视，出房穿越中庭索敌交火；玩家在一层 ——
+    // —— 楼梯（贴左墙，两跑直上，坡度随层高加长踏面，好跑动）——
+    addRamp(ctx, -25, sx0, -14, -2, 0, fh, 'z', 1, 0x8a8f98);        // 一层 → 二层
+    addRamp(ctx, -25, sx0, 0, 12, fh, fh * 2, 'z', 1, 0x8a8f98);     // 二层 → 三层
+    // 二层楼板（留楼梯井 x[-26,sx0] z[-26,-2]）
+    addSlab(ctx, sx0, HX, -HZ, HZ, fh, floorCol);
+    addSlab(ctx, -HX, sx0, -2, HZ, fh, floorCol);
+    // 三层楼板（留楼梯井 x[-26,sx0] z[0,12]）
+    addSlab(ctx, sx0, HX, -HZ, HZ, fh * 2, floorCol);
+    addSlab(ctx, -HX, sx0, 12, HZ, fh * 2, floorCol);
+    addSlab(ctx, -HX, sx0, -HZ, 0, fh * 2, floorCol);
+    // 楼梯井护栏（美化 + 防跌落提示）
+    addBoxY(ctx, sx0, 0, 0.3, 1.0, HZ * 2, accent, fh, { outline: 0.03 });
+    addBoxY(ctx, sx0, 6, 0.3, 1.0, HZ * 2 - 12, accent, fh * 2, { outline: 0.03 });
+
+    // —— 夹层（俯瞰中庭的半层 loft：短坡上去 + 护栏；层高提升后净空充足）——
+    var mezY = 2.9;
+    addRamp(ctx, 15, 18, -15, -8, 0, mezY, 'z', 1, 0x8a8f98);        // 地面 → 夹层
+    addSlab(ctx, 13, 25, -16, -4, mezY, 0x6f5f48);                   // 夹层楼板(俯瞰中庭)
+    addBoxY(ctx, 13, -10, 0.35, 1.0, 12, accent, mezY, { outline: 0.03 });         // 内侧护栏
+    addBoxY(ctx, 19, -4, 12, 1.0, 0.35, accent, mezY, { outline: 0.03 });          // 前侧护栏
+
+    // —— 三层统一结构：两端独立出生房(错位开口) + 中央枢纽结构 + 立柱 + 丰富掩体 + 角落房间 ——
+    for (var fl = 0; fl < 3; fl++) {
+      var yb = fl * fh, ly = yb + fh - 0.5;
+      // 出生房前墙：Alpha 开口偏左 x[-15,-5]，Bravo 开口偏右 x[5,15]（错位 → 开局不直视）
+      addBoxY(ctx, -20.5, -16, 11, fh, wt, wallCol, yb, { outline: 0.04 }); // x[-26,-15]
+      addBoxY(ctx, 10.5, -16, 31, fh, wt, wallCol, yb, { outline: 0.04 });  // x[-5,26]
+      addBoxY(ctx, -10.5, 16, 31, fh, wt, wallCol, yb, { outline: 0.04 });  // x[-26,5]
+      addBoxY(ctx, 20.5, 16, 11, fh, wt, wallCol, yb, { outline: 0.04 });   // x[15,26]
+
+      // 中央枢纽：4 立柱撑起中庭 + 中央矮台(可站的微高地) + 台上发光核心 + 台周低掩体
+      pillar(ctx, -6, -5, yb, fh, 0.7, 0x808690); pillar(ctx, 6, -5, yb, fh, 0.7, 0x808690);
+      pillar(ctx, -6, 5, yb, fh, 0.7, 0x808690); pillar(ctx, 6, 5, yb, fh, 0.7, 0x808690);
+      var daisBody = T.mesh(new THREE.BoxGeometry(7.6, 0.6, 5.6), 0x3a4048, { outline: 0.03, cast: false }); daisBody.position.set(0, yb + 0.3, 0); group.add(daisBody);
+      addSlab(ctx, -3.8, 3.8, -2.8, 2.8, yb + 0.6, 0x424852);            // 中央矮台(可站上)
+      var coreGlow = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), T.glow(fl === 1 ? 0x39C0FF : (fl === 2 ? 0x7CFFB0 : accent))); coreGlow.position.set(0, yb + 1.5, 0); group.add(coreGlow);
+      var corePL = new THREE.PointLight(fl === 1 ? 0x39C0FF : accent, 0.7, 18); corePL.position.set(0, yb + 1.6, 0); group.add(corePL);
+      addBoxY(ctx, -2.6, -3.6, 1.2, 1.0, 0.7, wallCol, yb, {}); addBoxY(ctx, 2.6, 3.6, 1.2, 1.0, 0.7, wallCol, yb, {}); // 台前后矮掩体
+
+      // 丰富中庭掩体（不同尺寸/材质：木箱堆 / 混凝土矮墙 / 油桶 / 矮台）
+      addBoxY(ctx, -12, -8, 2.0, 1.5, 2.0, th.wood, yb, { tex: 'wood' });
+      addBoxY(ctx, 12, 8, 2.0, 1.5, 2.0, th.wood, yb, { tex: 'wood' });
+      addBoxY(ctx, 12, -9, 1.4, 1.2, 4.0, wallCol, yb, {});   // 横矮墙
+      addBoxY(ctx, -12, 9, 1.4, 1.2, 4.0, wallCol, yb, {});
+      pillar(ctx, -13, 0, yb, 1.3, 0.5, 0xC24A32); pillar(ctx, -12, 1, yb, 1.3, 0.5, 0x3E6FB0); // 油桶
+      pillar(ctx, 13, 0, yb, 1.3, 0.5, 0xD9A93B); pillar(ctx, 12, -1, yb, 1.3, 0.5, 0x4E8B3A);
+      addBoxY(ctx, -18, -6, 1.3, 1.1, 2.6, th.cover, yb, {}); addBoxY(ctx, 18, 6, 1.3, 1.1, 2.6, th.cover, yb, {});
+
+      // 角落小房间（丰富室内空间：贴外墙 3 面墙 + 朝中庭门；不阻断南北主轴，供搜索/侧翼/伏击）
+      // 东北角房(x 正, z 负)：门朝 -x
+      addBoxY(ctx, 20.5, -8.5, 11, fh, wt, wallCol, yb, { outline: 0.03 });   // 北墙 z=-8.5
+      addBoxY(ctx, 15, -4.5, wt, fh, 8.5, wallCol, yb, { outline: 0.03 });    // 西墙(带门口在南段) x=15 z[-8.5,-0.25]
+      addBoxY(ctx, 12, -3, 2.0, 1.3, 2.0, th.wood, yb, { tex: 'wood' });      // 房内掩体
+      // 西南角房(x 负, z 正)：门朝 +x
+      addBoxY(ctx, -20.5, 8.5, 11, fh, wt, wallCol, yb, { outline: 0.03 });
+      addBoxY(ctx, -15, 4.5, wt, fh, 8.5, wallCol, yb, { outline: 0.03 });
+      addBoxY(ctx, -12, 3, 2.0, 1.3, 2.0, th.wood, yb, { tex: 'wood' });
+
+      // 吊灯（每层 4 盏）
+      ceilingLamp(ctx, -13, ly, -13); ceilingLamp(ctx, 13, ly, 13); ceilingLamp(ctx, -13, ly, 13); ceilingLamp(ctx, 13, ly, -13);
+    }
+
+    // —— 出生点：分布三层，各层据一端房间(靠各自开口)，开局不直视，出房穿越中庭索敌；玩家在一层 ——
     var spawns = { alpha: [], bravo: [], charlie: [] }, perFloor = [4, 3, 3];
     for (var flr = 0; flr < 3; flr++) {
       var fy = flr * fh, nn = perFloor[flr];
       for (var q = 0; q < nn; q++) {
         var qz = (q % 2) * 2.6;
-        spawns.alpha.push(new THREE.Vector3(-14 + q * 3, fy, -22 + qz)); // 靠左开口
-        spawns.bravo.push(new THREE.Vector3(14 - q * 3, fy, 22 - qz));   // 靠右开口
+        spawns.alpha.push(new THREE.Vector3(-14 + q * 3, fy, -23 + qz)); // 靠左开口
+        spawns.bravo.push(new THREE.Vector3(14 - q * 3, fy, 23 - qz));   // 靠右开口
       }
     }
     return { group: group, solids: ctx.solids, colliders: ctx.colliders, platforms: ctx.platforms, spawns: spawns, center: new THREE.Vector3(0, 0, 0), radius: radius, theme: th, themeName: '室内三层塔楼', water: null };
