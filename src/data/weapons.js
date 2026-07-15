@@ -31,7 +31,7 @@
     m700:   { id:'m700',   name:'M700 狙击步枪',category:'sniper', damage:120,mag:5,  reserve:30,  rpm:40,   auto:false, reload:3.4, spread:0.003, range:1500,velocity:2700, desc:'高伤害栓动狙，一枪定乾坤' },
 
     // —— 主武器：精确射手步枪 ——
-    m14:    { id:'m14',    name:'M14 射手步枪',    category:'marksman',damage:30,mag:50,reserve:150,rpm:880,auto:true,  reload:2.8, spread:0.013, range:900, velocity:1900, scope:'reddot', ads:46, desc:'50 发大容量全自动射手步枪，红点速瞄，超高射速火力压制' },
+    m14:    { id:'m14',    name:'M14 射手步枪',    category:'marksman',damage:40,mag:50,reserve:150,rpm:880,auto:true,  reload:2.8, spread:0.013, range:900, velocity:1900, scope:'reddot', ads:46, desc:'50 发大容量全自动射手步枪，红点速瞄，超高射速火力压制' },
     sr25:   { id:'sr25',   name:'SR-25 精确射手步枪',category:'marksman',damage:62,mag:20,reserve:100,rpm:260,auto:false,reload:2.7, spread:0.010, range:1000,velocity:2000, desc:'大狙在里面但你得找，中远距离点射' },
 
     // —— 主武器：霰弹枪 ——
