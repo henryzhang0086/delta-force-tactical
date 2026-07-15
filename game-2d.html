@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0a0c10">
+  <title>三角洲行动 · Delta Force Tactical</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>html,body{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}</style>
+</head>
+<body>
+  <div id="wrap">
+    <canvas id="game" width="1280" height="720"></canvas>
+  </div>
+
+  <!-- 运行时错误可见化：任何 JS 错误直接显示在页面顶部 -->
+  <script>
+    (function () {
+      function box() {
+        var d = document.getElementById('__err');
+        if (!d) {
+          d = document.createElement('div');
+          d.id = '__err';
+          d.style.cssText = 'position:fixed;left:0;top:0;right:0;max-height:45%;overflow:auto;background:rgba(176,0,32,.95);color:#fff;font:12px/1.5 Consolas,monospace;padding:10px 14px;white-space:pre-wrap;z-index:99999;border-bottom:2px solid #fff';
+          (document.body || document.documentElement).appendChild(d);
+        }
+        return d;
+      }
+      window.__report = function (m) { box().textContent += m + '\n'; };
+      window.addEventListener('error', function (e) {
+        window.__report('JS 错误: ' + e.message + '  (' + String(e.filename || '').split('/').pop() + ':' + e.lineno + ')');
+      });
+      window.addEventListener('unhandledrejection', function (e) {
+        window.__report('Promise 错误: ' + ((e.reason && e.reason.message) || e.reason));
+      });
+    })();
+  </script>
+  <div id="hint">三角洲行动 · WASD 移动 · 鼠标射击 · R 换弹 · F 破译 · 1-5 道具 · V 近战 · Shift 冲刺 · Tab 计分板</div>
+
+  <!-- 引擎层 -->
+  <script src="src/engine/vec2.js"></script>
+  <script src="src/engine/rng.js"></script>
+  <script src="src/engine/input.js"></script>
+  <script src="src/engine/audio.js"></script>
+  <script src="src/engine/particles.js"></script>
+
+  <!-- 数据层 -->
+  <script src="src/data/config.js"></script>
+  <script src="src/data/weapons.js"></script>
+  <script src="src/data/armor.js"></script>
+  <script src="src/data/items.js"></script>
+  <script src="src/data/loadouts.js"></script>
+
+  <!-- 游戏逻辑 -->
+  <script src="src/game/map.js"></script>
+  <script src="src/game/combat.js"></script>
+  <script src="src/game/objective.js"></script>
+  <script src="src/game/economy.js"></script>
+  <script src="src/game/bullet.js"></script>
+  <script src="src/game/agent.js"></script>
+  <script src="src/game/ai.js"></script>
+
+  <!-- UI -->
+  <script src="src/ui/hud.js"></script>
+  <script src="src/ui/buymenu.js"></script>
+
+  <!-- 主控 + 引导 -->
+  <script src="src/game/game.js"></script>
+  <script src="src/main.js"></script>
+  <!-- 手游触屏操控（仅触屏设备启用） -->
+  <script src="src/touch2d.js"></script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0a0d18">
+  <title>三角洲行动 · 3D 高清卡通版</title>
+  <style>
+    html,body{margin:0;height:100%;overflow:hidden;background:#0a0d18;font-family:"Segoe UI",system-ui,sans-serif;
+      touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}
+    #game3d{touch-action:none}
+    #stage{position:fixed;inset:0}
+    #game3d{display:block;width:100%;height:100%}
+    #hud3d{position:fixed;inset:0;pointer-events:none;z-index:10}
+    #bootErr{position:fixed;left:0;top:0;right:0;color:#fff;background:rgba(176,0,32,.95);font:12px/1.5 Consolas,monospace;padding:8px 12px;z-index:9999;white-space:pre-wrap}
+    #bootErr:empty{display:none}
+    /* 开始遮罩 */
+    #startOverlay{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      background:radial-gradient(1200px 700px at 50% 30%,#1c2748,#0a0d18 70%);color:#fff;text-align:center}
+    #startOverlay h1{font-size:46px;margin:0;font-weight:900;letter-spacing:2px;background:linear-gradient(90deg,#39C0FF,#7CFFB0);-webkit-background-clip:text;background-clip:text;color:transparent}
+    #startOverlay .sub{color:#9fb0c8;margin:10px 0 4px;font-size:15px}
+    #startOverlay .teams{display:flex;gap:14px;margin:22px 0}
+    #startOverlay .tchip{padding:8px 16px;border-radius:12px;font-weight:800;letter-spacing:1px;border:2px solid}
+    .modebtn{margin-top:16px;padding:14px 34px;font-size:17px;font-weight:800;color:#04121f;cursor:pointer;
+      border:none;border-radius:14px;box-shadow:0 8px 26px rgba(0,0,0,.35);transition:transform .12s}
+    .modebtn:hover{transform:translateY(-2px) scale(1.03)}
+    #startFfa{background:linear-gradient(90deg,#39C0FF,#7CFFB0)}
+    #startPve{background:linear-gradient(90deg,#7ad84a,#4FA63B);color:#06210a}
+    #startBed{background:linear-gradient(90deg,#ffb14a,#ff5a5a);color:#2a0d06}
+    #startRail{background:linear-gradient(90deg,#8f7bff,#39C0FF);color:#0a0820}
+    #startIsland{background:linear-gradient(90deg,#2fd6c0,#2f8fd6);color:#05201d}
+    #startTdm{background:linear-gradient(90deg,#ff6f91,#ff3d6e);color:#2a0610}
+    .keys{margin-top:22px;color:#7f8ba3;font-size:12px;line-height:1.9}
+    .keys b{color:#cfe0f5}
+    #backLink{position:fixed;left:16px;top:12px;z-index:60;color:#9fb0c8;text-decoration:none;font-size:13px;background:rgba(12,15,28,.7);padding:6px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12)}
+    #backLink:hover{color:#fff}
+  </style>
+</head>
+<body>
+  <div id="bootErr"></div>
+  <div id="stage">
+    <canvas id="game3d"></canvas>
+    <div id="hud3d"></div>
+  </div>
+  <a id="backLink" href="index.html">← 返回主菜单</a>
+
+  <div id="startOverlay">
+    <h1>三角洲行动 · 3D 高清卡通</h1>
+    <div class="sub">三方乱斗 · 每局随机战场 · 先赢 3 局夺冠</div>
+    <div class="teams">
+      <div class="tchip" style="border-color:#39C0FF;color:#39C0FF">ALPHA（你）</div>
+      <div class="tchip" style="border-color:#FF5A5A;color:#FF5A5A">BRAVO</div>
+      <div class="tchip" style="border-color:#FFC83D;color:#FFC83D">CHARLIE</div>
+    </div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center">
+      <button id="startFfa" class="modebtn">⚔️ 三方乱斗</button>
+      <button id="startPve" class="modebtn">🧟 怪物生存</button>
+      <button id="startBed" class="modebtn">🛏️ 起床之战</button>
+      <button id="startRail" class="modebtn">🚊 轻轨争夺战</button>
+      <button id="startIsland" class="modebtn">🏝️ 海岛作战</button>
+      <button id="startTdm" class="modebtn">⚔️ 团队竞技</button>
+    </div>
+    <div class="keys">
+      <b>WASD</b> 移动 · <b>鼠标</b> 瞄准 · <b>左键</b> 开火 · <b>右键</b> 瞄准镜(打哪准哪)<br>
+      <b>V</b> 第一/第三人称 · <b>Q/E</b> 左右探头 · <b>空格</b> 跳跃 · <b>Ctrl</b> 卧倒 · <b>G/C/F</b> 手雷 · <b>R</b> 换弹 · <b>Shift</b> 冲刺<br>
+      <b>Tab</b> 计分板 · <b>B</b> 起床商店 · <b>T</b> 上/下坦克·摩托车 · <b>M</b> 背景音乐 · <b>Esc</b> 暂停/设置 · 点击画面锁定鼠标<br>
+      <span style="color:#ffb14a">起床之战</span>：摧毁敌方床铺 · 💎 资源换枪 · 最后存活队伍获胜　·　<span style="color:#8f7bff">轻轨争夺战</span>：压制车厢控制轻轨计分<br>
+      <span style="color:#2fd6c0">海岛作战</span>：环海大地图 · 双队各5人 · 可进多层楼房（楼梯上楼/窗口跳下/室内交战）· 环线轻轨+坦克+摩托车 · 高血量耐战（每局武器刷新）<br>
+      <span style="color:#ff6f91">团队竞技</span>：紧凑对称竞技场（集装箱堆场/中央两层楼/哨塔/卡车/油桶）· 两队持续重生 · 先达 50 击杀获胜
+    </div>
+  </div>
+
+  <!-- 运行时错误可见化 -->
+  <script>
+    window.addEventListener('error', function (e) {
+      var d = document.getElementById('bootErr');
+      if (d) d.textContent += 'JS 错误: ' + e.message + '  (' + String(e.filename||'').split('/').pop() + ':' + e.lineno + ')\n';
+    });
+  </script>
+
+  <!-- 3D 引擎 -->
+  <script src="src3d/vendor/three.min.js"></script>
+  <!-- 后期处理(Bloom 泛光 / FXAA 抗锯齿 / 色彩校正) -->
+  <script src="src3d/vendor/CopyShader.js"></script>
+  <script src="src3d/vendor/LuminosityHighPassShader.js"></script>
+  <script src="src3d/vendor/FXAAShader.js"></script>
+  <script src="src3d/vendor/GammaCorrectionShader.js"></script>
+  <script src="src3d/vendor/EffectComposer.js"></script>
+  <script src="src3d/vendor/RenderPass.js"></script>
+  <script src="src3d/vendor/ShaderPass.js"></script>
+  <script src="src3d/vendor/MaskPass.js"></script>
+  <script src="src3d/vendor/UnrealBloomPass.js"></script>
+
+  <!-- 复用原版数据/逻辑层（DF 命名空间） -->
+  <script src="src/engine/audio.js?v=20"></script>
+  <script src="src/data/config.js?v=20"></script>
+  <script src="src/data/weapons.js?v=20"></script>
+  <script src="src/data/armor.js?v=20"></script>
+  <script src="src/data/items.js?v=20"></script>
+  <script src="src/data/loadouts.js?v=20"></script>
+  <script src="src/game/combat.js?v=20"></script>
+
+  <!-- 3D 层（D3 命名空间） -->
+  <script src="src3d/weapons3d.js?v=20"></script>
+  <script src="src3d/toon.js?v=20"></script>
+  <script src="src3d/textures.js?v=20"></script>
+  <script src="src3d/mapgen.js?v=20"></script>
+  <script src="src3d/character.js?v=20"></script>
+  <script src="src3d/effects.js?v=20"></script>
+  <script src="src3d/grenade.js?v=20"></script>
+  <script src="src3d/monsters.js?v=20"></script>
+  <script src="src3d/bed.js?v=20"></script>
+  <script src="src3d/vehicles.js?v=20"></script>
+  <script src="src3d/entity.js?v=20"></script>
+  <script src="src3d/ai.js?v=20"></script>
+  <script src="src3d/player.js?v=20"></script>
+  <script src="src3d/hud.js?v=20"></script>
+  <script src="src3d/game.js?v=20"></script>
+  <script src="src3d/main.js?v=20"></script>
+  <!-- 手游触屏操控（仅触屏设备启用） -->
+  <script src="src3d/touch.js?v=20"></script>
+</body>
+</html>

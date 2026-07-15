@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0a0d18">
+  <title>三角洲行动 · 启动中心</title>
+  <style>
+    :root{ --a:#39C0FF; --b:#7CFFB0; --r:#FF5A5A; --y:#FFC83D; }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;font-family:"Segoe UI",system-ui,sans-serif;color:#eaf2ff;
+      background:radial-gradient(1300px 800px at 50% -10%,#22335e,#0a0d18 65%) fixed;overflow-x:hidden}
+    .bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(120,160,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(120,160,255,.05) 1px,transparent 1px);
+      background-size:44px 44px;mask-image:radial-gradient(1000px 600px at 50% 40%,#000,transparent 80%);z-index:0}
+    .glow{position:fixed;border-radius:50%;filter:blur(90px);opacity:.5;z-index:0}
+    .g1{width:420px;height:420px;background:#1e6fff;left:-80px;top:-60px}
+    .g2{width:380px;height:380px;background:#00d4a0;right:-60px;bottom:-80px}
+    .wrap{position:relative;z-index:2;max-width:1000px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+    .badge{font-size:12px;letter-spacing:4px;color:#7f9fc8;border:1px solid rgba(255,255,255,.15);padding:5px 14px;border-radius:20px;margin-bottom:18px}
+    h1{font-size:clamp(34px,6vw,64px);margin:0;font-weight:900;letter-spacing:2px;
+      background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent;
+      text-shadow:0 8px 40px rgba(57,192,255,.25)}
+    .tag{color:#9fb0c8;margin:12px 0 4px;font-size:16px}
+    .cards{display:flex;gap:24px;margin-top:38px;flex-wrap:wrap;justify-content:center}
+    .card{width:340px;max-width:88vw;border-radius:20px;padding:26px 24px;text-align:left;cursor:pointer;position:relative;overflow:hidden;
+      background:linear-gradient(180deg,rgba(24,30,52,.9),rgba(14,18,32,.95));border:2px solid rgba(255,255,255,.1);
+      box-shadow:0 12px 40px rgba(0,0,0,.45);transition:transform .18s,border-color .18s,box-shadow .18s;text-decoration:none;color:inherit}
+    .card:hover{transform:translateY(-8px);border-color:var(--accent);box-shadow:0 22px 60px rgba(0,0,0,.55),0 0 0 1px var(--accent)}
+    .card .ic{font-size:40px}
+    .card h2{margin:12px 0 6px;font-size:24px;font-weight:800}
+    .card .badge3d{position:absolute;right:18px;top:18px;font-size:11px;font-weight:800;letter-spacing:1px;padding:4px 10px;border-radius:20px}
+    .card p{color:#9fb0c8;font-size:13.5px;line-height:1.7;margin:8px 0 16px}
+    .feat{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+    .feat span{font-size:11px;color:#cfe0f5;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);padding:3px 9px;border-radius:8px}
+    .go{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:15px;color:var(--accent)}
+    .teams{display:flex;gap:10px;margin-top:30px}
+    .tchip{font-size:12px;font-weight:800;letter-spacing:1px;padding:6px 14px;border-radius:20px;border:2px solid}
+    .foot{margin-top:26px;color:#5f6b83;font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="glow g1"></div><div class="glow g2"></div>
+  <div class="wrap">
+    <div class="badge">DELTA FORCE · TACTICAL</div>
+    <h1>三角洲行动</h1>
+    <div class="tag">选择你的战场版本</div>
+
+    <div class="cards">
+      <a class="card" style="--accent:var(--a)" href="game-3d.html">
+        <div class="badge3d" style="background:linear-gradient(90deg,var(--a),var(--b));color:#04121f">全新 3D</div>
+        <div class="ic">🎮</div>
+        <h2>3D 高清卡通版</h2>
+        <p>越肩第三人称 · 三方乱斗 · 卡通渲染 · 每局随机战场。ALPHA / BRAVO / CHARLIE 三支小队混战，先赢 3 局夺冠。</p>
+        <div class="feat"><span>越肩视角</span><span>三方乱斗</span><span>随机地图</span><span>卡通描边</span><span>动态光影</span></div>
+        <span class="go">进入战场 →</span>
+      </a>
+
+      <a class="card" style="--accent:var(--y)" href="game-2d.html">
+        <div class="badge3d" style="background:rgba(255,200,61,.16);color:var(--y);border:1px solid var(--y)">经典</div>
+        <div class="ic">🕹️</div>
+        <h2>经典 2D 战术版</h2>
+        <p>原版俯视角战术射击 · 7 局 3 胜攻防爆破 · 完整经济/战备/护甲系统。原汁原味，完整保留。</p>
+        <div class="feat"><span>俯视战术</span><span>攻防爆破</span><span>经济系统</span><span>15 套战备</span><span>密钥破译</span></div>
+        <span class="go">开始对战 →</span>
+      </a>
+    </div>
+
+    <div class="teams">
+      <div class="tchip" style="border-color:var(--a);color:var(--a)">ALPHA</div>
+      <div class="tchip" style="border-color:var(--r);color:var(--r)">BRAVO</div>
+      <div class="tchip" style="border-color:var(--y);color:var(--y)">CHARLIE</div>
+    </div>
+    <div class="foot">建议使用 Chrome / Edge · 3D 版需现代显卡支持 WebGL</div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "delta-force-tactical",
+  "version": "1.0.0",
+  "description": "三角洲行动 · 俯视角战术射击（攻防爆破 7 局 3 胜制）——零依赖前端实现",
+  "scripts": {
+    "test": "node tests/run.js && node tests/smoke.js",
+    "test:unit": "node tests/run.js",
+    "test:smoke": "node tests/smoke.js",
+    "start": "node -e \"console.log('打开 index.html 即玩，或运行：npx serve . / py -m http.server 8080')\""
+  },
+  "license": "MIT",
+  "private": true
+}
