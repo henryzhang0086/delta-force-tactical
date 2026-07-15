@@ -175,8 +175,13 @@
         if (e.code === 'KeyB') { e.preventDefault(); self.toggleShop(); return; }
         if (self.phase === 'live' && self._shopOpen && /^Digit[1-6]$/.test(e.code)) { self.buyWeapon(parseInt(e.code.slice(5), 10) - 1); return; }
       }
-      // 赛前选武器（FFA / 海岛，均走倒计时选枪流程）
-      if ((self.mode === 'ffa' || self.mode === 'island') && self.phase === 'countdown' && /^Digit[1-6]$/.test(e.code)) { self.pickWeapon(parseInt(e.code.slice(5), 10) - 1); }
+      // 赛前选武器（FFA / 海岛）：数字键 1-9 选前 9 把，字母键 A-Z 选其余（数字不够用字母）
+      if ((self.mode === 'ffa' || self.mode === 'island') && self.phase === 'countdown') {
+        var idx = -1, dm = /^Digit([1-9])$/.exec(e.code), lm = /^Key([A-Z])$/.exec(e.code);
+        if (dm) idx = parseInt(dm[1], 10) - 1;
+        else if (lm) idx = 9 + (lm[1].charCodeAt(0) - 65);
+        if (idx >= 0 && idx < self.WEAPON_CHOICES.length) { self.pickWeapon(idx); e.preventDefault(); }
+      }
     });
     document.addEventListener('keyup', function (e) {
       if (e.code === 'Tab') { self.showingBoard = false; D3.HUD.hideScoreboard(); }
@@ -227,14 +232,18 @@
   };
   Game3D.prototype._resume = function () { this.paused = false; D3.HUD.hidePause(); };
 
-  // 玩家赛前选武器（保留护甲, 只换主武器）；每局从武器池随机刷新
+  // 玩家赛前选武器（保留护甲, 只换主武器）；不再随机刷新，展示全部武器
   Game3D.prototype.WEAPON_CHOICES = ['mce','asval','vector','aug','awm','m250'];
-  Game3D.prototype.WEAPON_POOL = ['mce','asval','vector','aug','awm','m250','sr25','mp5','m700','m14','sv98','pkm','m870','uzi','ak12','scar','famas','p90','ump45','mg36','m24','qbu','spas','qbz95','tenglong','qjb201'];
   Game3D.prototype._rollWeaponChoices = function () {
-    var pool = this.WEAPON_POOL.filter(function (id) { return DF.WEAPONS[id]; });
-    for (var i = pool.length - 1; i > 0; i--) { var j = (Math.random() * (i + 1)) | 0; var t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
-    // 尽量覆盖不同类别，保证一狙一机枪的多样性
-    this.WEAPON_CHOICES = pool.slice(0, 6);
+    // 列出全部可选武器（近战除外），固定顺序，每局一致，不随机
+    var ids = [];
+    for (var id in DF.WEAPONS) {
+      if (!DF.WEAPONS.hasOwnProperty(id)) continue;
+      var w = DF.WEAPONS[id];
+      if (!w || w.category === 'melee') continue;
+      ids.push(id);
+    }
+    this.WEAPON_CHOICES = ids;
   };
   Game3D.prototype.pickWeapon = function (idx) {
     var ids = this.WEAPON_CHOICES; if (idx < 0 || idx >= ids.length) return;
@@ -388,10 +397,10 @@
 
     this.roundTimer = ROUND_TIME;
     this.phase = 'countdown';
-    this.phaseTimer = 3.2;
+    this.phaseTimer = 20; // 选枪阶段 20 秒
     this.playerKills = 0; D3.HUD.setKills(0);
     this._playerChoice = null;
-    this._rollWeaponChoices(); // 本局武器池刷新
+    this._rollWeaponChoices(); // 展示全部武器（不随机）
     D3.HUD.setLow(false);
     D3.HUD.hideBanner();
     D3.HUD.showBanner('第 ' + this.round + ' 局', '战场：' + this.map.themeName, '#8fd0ff');
@@ -1403,7 +1412,7 @@
       D3.HUD.setTimer(this.roundTimer);
       D3.HUD.setCountdown(Math.max(1, Math.ceil(this.phaseTimer)));
       this._drawMinimap(); this._updateWeather(dt);
-      if (this.phaseTimer <= 0) { this.phase = 'live'; D3.HUD.hideBanner(); D3.HUD.setCountdown(null); D3.HUD.hideLoadout(); this.audio.whistle && this.audio.whistle(); if (this.player) this.player.enabled = true; }
+      if (this.phaseTimer <= 0) { this.phase = 'live'; D3.HUD.hideBanner(); D3.HUD.setCountdown(null); D3.HUD.hideLoadout(); this.audio.whistle && this.audio.whistle(); if (this.player) { this.player.enabled = true; this.player.wantThrow = false; this.player.wantInteract = false; } }
     } else if (this.phase === 'live') {
       this.roundTimer -= dt;
       // 载具/轻轨（海岛）先更新以正确载人

@@ -281,14 +281,18 @@
   HUD.prototype.hidePause = function () { this.pause.style.display = 'none'; };
 
   // 赛前武器选择：items=[{id,name,cat}], onPick(index)
+  // 键位标签：前 9 把用数字 1-9，其余用字母 A-Z（数字不够时）
+  HUD.prototype._loadoutKey = function (i) { return i < 9 ? String(i + 1) : String.fromCharCode(65 + (i - 9)); };
   HUD.prototype.showLoadout = function (items, current, onPick) {
-    var html = '<div style="font-size:12px;color:#9fb0c8;margin-bottom:8px;letter-spacing:1px">选择武器（数字键 1-'+items.length+' 或点击）</div><div style="display:flex;gap:8px;justify-content:center">';
+    var self = this;
+    var html = '<div style="font-size:12px;color:#9fb0c8;margin-bottom:8px;letter-spacing:1px">选择武器（全部 '+items.length+' 把 · 数字键 1-9 · 字母键 A-Z · 或点击）</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:940px;margin:0 auto;max-height:60vh;overflow:auto">';
     for (var i = 0; i < items.length; i++) {
       var it = items[i], sel = i === current;
-      html += '<div data-idx="'+i+'" class="h3-lo" style="cursor:pointer;padding:8px 12px;border-radius:10px;min-width:96px;'+
+      html += '<div data-idx="'+i+'" class="h3-lo" style="cursor:pointer;padding:5px 9px;border-radius:9px;min-width:80px;text-align:left;'+
         'background:'+(sel?'linear-gradient(180deg,#1c4a6e,#123049)':'rgba(18,22,38,.85)')+';border:2px solid '+(sel?'#39C0FF':'rgba(255,255,255,.12)')+'">'+
-        '<div style="font-size:9px;color:#7f8ba3">'+(i+1)+' · '+it.cat+'</div>'+
-        '<div style="font-size:13px;font-weight:800;color:'+(sel?'#8fd0ff':'#cfe0f5')+';margin-top:2px">'+it.name+'</div></div>';
+        '<div style="font-size:9px;color:#7f8ba3;display:flex;justify-content:space-between;gap:6px"><span style="color:#ffd27a;font-weight:900">'+self._loadoutKey(i)+'</span><span>'+it.cat+'</span></div>'+
+        '<div style="font-size:12px;font-weight:800;color:'+(sel?'#8fd0ff':'#cfe0f5')+';margin-top:1px">'+it.name+'</div></div>';
     }
     html += '</div>';
     this.loadout.innerHTML = html; this.loadout.style.display = 'block';
